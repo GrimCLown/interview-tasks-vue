@@ -1,60 +1,87 @@
 <script setup lang="ts">
-const numbers = [];
-let limit = 100;
+import { ref, computed } from 'vue';
 
-function n()
-{
-	let numbers = [];
-	for(var i = 0; i < limit; i++) { numbers = [...numbers, i]; }
+const limit = ref(100);
+const activeDivisors = ref(new Set<number>());
 
-	return numbers.sort(() => Math.random() - 0.5);
-}
 
-function hov(number) {
-  const nums = document.querySelectorAll('.number');
-
-  for(let i = 0; i < nums.length; i++)
-  {
-    const num = nums[i].textContent.trim();
-    if(number % num === 0)
-    {
-      nums[i].classList.add('active')
-      console.log('divisor', num)
-    }
+const shuffledNumbers = computed(() => {
+  const arr = Array.from({ length: limit.value }, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
+  return arr;
+});
+
+function getDivisors(n: number) {
+  const divisors = new Set<number>();
+  for (let i = 1; i <= n; i++) {
+    if (n % i === 0) divisors.add(i);
+  }
+  return divisors;
 }
 
-function reset()
-{
-	const nums = document.querySelectorAll('.number');
-	nums.forEach(num => num.classList.remove('active'))
+function handleHover(number: number) {
+  activeDivisors.value = getDivisors(number);
+}
+
+function reset() {
+  activeDivisors.value.clear();
 }
 </script>
 
 <template>
-	<div>
-		<input type="number" v-model="limit" /><br /><br />
-		<div class="number"
-			:id="'number-'+number"
-			v-for="number in n()"
-			:key="number"
-			@mouseover="hov(number)"
-			@mouseout="reset"
-		>
-			{{ number }}
-		</div>
-	</div>
+  <div>
+    <input 
+      type="number" 
+      v-model.number="limit" 
+      min="1" 
+      class="limit-input"
+    /><br><br>
+    
+    <div class="numbers-container">
+      <div
+        v-for="number in shuffledNumbers"
+        :key="number"
+        class="number"
+        :class="{ active: activeDivisors.has(number) }"
+        @mouseover="handleHover(number)"
+        @mouseout="reset"
+      >
+        {{ number }}
+      </div>
+    </div>
+  </div>
 </template>
 
 <style>
-.number {
-	display: inline-block;
-	padding: 5px;
-	background-color: lightgrey;
-	margin: 5px;
+.limit-input {
+  padding: 5px;
+  margin-bottom: 1rem;
 }
 
-.active {
-	background-color: red;
+.numbers-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.number {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.number.active {
+  background-color: #ff4444;
+  color: white;
+}
+
+.number:hover {
+  background-color: #bdbdbd;
 }
 </style>
